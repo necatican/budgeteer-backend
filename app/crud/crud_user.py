@@ -9,6 +9,12 @@ from app.models.user import User
 from app.schemas.token import TokenData
 from app.schemas.user import UserInDB
 
+credentials_exception = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail="Could not validate credentials",
+    headers={"WWW-Authenticate": "Bearer"},
+)
+
 
 async def get_user(user_id: int, session: AsyncSession):
 
@@ -22,16 +28,12 @@ async def get_user_by_email(session: AsyncSession, email: str):
     query = select(User).where(User.email == email)
     result = await session.execute(query)
     user = result.scalar()
-
+    if not user:
+        raise credentials_exception
     return UserInDB(**user.__dict__)
 
 
 async def get_current_user(token: str = Depends(oauth2_scheme),  session: AsyncSession = Depends(get_async_session)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[
                              settings.ACCESS_TOKEN_ALGORITHM])

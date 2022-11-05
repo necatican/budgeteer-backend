@@ -1,16 +1,12 @@
-from uuid import uuid4
-
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String
 
 from app.db.session import Base
+from app.models.common import CommonUUID
 
 
-class User(Base):
+class User(CommonUUID, Base):
     __tablename__ = "users"
 
-    id = Column(UUID(as_uuid=True), primary_key=True,
-                index=True, default=uuid4())
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     # TODO: add salt

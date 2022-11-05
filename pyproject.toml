@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "budgeteer-backend"
+version = "0.1.0"
+description = ""
+authors = ["necatican <contact@necatican.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.86.0"
+python-multipart = "^0.0.5"
+starlette = "^0.20.4"
+uvicorn = {extras = ["standard"], version = "^0.19.0"}
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+sqlalchemy = "^1.4.41"
+psycopg2 = "^2.9.5"
+alembic = "^1.8.1"
+python-dotenv = "^0.21.0"
+databases = {extras = ["aiopg"], version = "^0.6.1"}
+asyncpg = "^0.27.0"
+
+
+[tool.poetry.group.dev.dependencies]
+autopep8 = "^2.0.0"
+sqlalchemy-stubs = "^0.4"
+mypy = "^0.982"
+isort = "^5.10.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

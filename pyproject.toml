@@ -19,6 +19,8 @@ alembic = "^1.8.1"
 python-dotenv = "^0.21.0"
 databases = {extras = ["aiopg"], version = "^0.6.1"}
 asyncpg = "^0.27.0"
+pip = "^22.3.1"
+pydantic = {extras = ["email"], version = "^1.10.2"}
 
 
 [tool.poetry.group.dev.dependencies]

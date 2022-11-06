@@ -16,4 +16,5 @@ async_session = sessionmaker(
     expire_on_commit=False
 )
 
+# TODO: I don't feel like `declarative_base` belongs here.
 Base = declarative_base()

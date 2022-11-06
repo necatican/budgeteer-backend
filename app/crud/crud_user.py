@@ -1,50 +1,65 @@
-from fastapi import Depends, HTTPException, status
-from jose import JWTError, jwt
+
+from typing import Any, Dict
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from app.api.deps import get_async_session, oauth2_scheme
-from app.core.config import settings
-from app.models.user import User
-from app.schemas.token import TokenData
-from app.schemas.user import UserInDB
-
-credentials_exception = HTTPException(
-    status_code=status.HTTP_401_UNAUTHORIZED,
-    detail="Could not validate credentials",
-    headers={"WWW-Authenticate": "Bearer"},
-)
+from app import models
+from app.core.auth import get_password_hash, verify_password
+from app.crud.base import CRUDBase
+from app.schemas.user import UserCreate, UserInDB, UserUpdate
 
 
-async def get_user(user_id: int, session: AsyncSession):
+class CRUDUser(CRUDBase[models.User, UserCreate, UserUpdate]):
+    async def get_by_email(self, session: AsyncSession, email: str):
+        query = select(models.User).where(models.User.email == email)
+        result = await session.execute(query)
+        res = result.scalar()
+        if not res:
+            return None
+        return res
 
-    query = select(User).where(User.id == user_id)
-    query_res = await session.execute(query)
-    user = query_res.scalar()
-    return UserInDB(**user.__dict__)
+    async def authenticate_user(self, email: str, password: str, session: AsyncSession):
+        user = await crud_user.get_by_email(session, email=email)
+        if not user:
+            return False
+        if not verify_password(password, user.hashed_password):
+            return False
+        return user
+
+    async def create(self, session: AsyncSession, obj_in: UserCreate):
+        db_obj = models.User(
+            email=obj_in.email,
+            hashed_password=get_password_hash(obj_in.password)
+        )
+
+        res = await super().create(session, obj_in=db_obj)
+
+        return res
+
+    async def update(
+        self,
+        session: AsyncSession,
+        patch: UserUpdate | Dict[str, Any],
+        current_user: models.User,
+    ):
+
+        # password/hashed_password is an exception since the field name changes during an update
+        if patch.password is not None:
+            hashed_password = hashed_password = get_password_hash(
+                patch.password)
+        else:
+            hashed_password = current_user.hashed_password
+
+        res = await super().update(
+            session,
+            db_obj=current_user,
+            obj_in=UserInDB(
+                hashed_password=hashed_password,
+            )
+        )
+
+        return res
 
 
-async def get_user_by_email(session: AsyncSession, email: str):
-    query = select(User).where(User.email == email)
-    result = await session.execute(query)
-    user = result.scalar()
-    if not user:
-        raise credentials_exception
-    return UserInDB(**user.__dict__)
-
-
-async def get_current_user(token: str = Depends(oauth2_scheme),  session: AsyncSession = Depends(get_async_session)):
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[
-                             settings.ACCESS_TOKEN_ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-        token_data = TokenData(email=email)
-    except JWTError:
-        raise credentials_exception
-
-    user = await get_user_by_email(email=token_data.email, session=session)
-    if user is None:
-        raise credentials_exception
-    return user
+crud_user = CRUDUser(models.User)

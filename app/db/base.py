@@ -2,3 +2,4 @@
 # imported by Alembic
 from app.db.session import Base  # noqa
 from app.models.user import User  # noqa
+from app.models.account import Account # noqa
